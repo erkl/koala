@@ -67,14 +67,18 @@ __bridge.frameSpawned.connect(function (document, handle, parentHandle) {
     return;
 
   /* Attach listeners for simple signals. */
-  function map(event, signal) {
-    handle[signal].connect(function () { frame.emit(event); });
-  }
+  handle.loadStarted.connect(function () { frame.emit('loading'); });
+  handle.loadFinished.connect(function () { frame.emit('loaded'); });
+  handle.initialLayoutCompleted.connect(function () { frame.emit('layout'); });
 
-  map('loading', 'loadStarted');
-  map('loaded', 'loadFinished');
-  map('cleared', 'javaScriptWindowObjectCleared');
-  map('layout', 'initialLayoutCompleted');
+  handle.javaScriptWindowObjectCleared.connect(function () {
+    /* Update outdated properties. */
+    frame.children = [];
+    frame.window = ref.window;
+    frame.document = ref.document;
+
+    frame.emit('cleared');
+  });
 
   /* By monitoring the QWebFrame's 'destroyed' signal, we're able to detect
    * when the frame is removed from the DOM. */
