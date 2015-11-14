@@ -1,0 +1,13 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <!-- Top-level frame. -->
+        <file>top.html</file>
+
+        <!-- JavaScript library. -->
+        <file>lib/channel.js</file>
+        <file>lib/frame.js</file>
+        <file>lib/koala.js</file>
+        <file>lib/util.js</file>
+    </qresource>
+</RCC>

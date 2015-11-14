@@ -1,0 +1,119 @@
+<!doctype html>
+<html><head></head><body></body></html>
+<script type="text/javascript">
+(function (window, document, eval) {
+
+
+/* Grab the bridge object, which we'll use to communicate with the
+ * Qt-side of the process. */
+var __bridge = window.__bridge;
+
+
+/* Cache of all loaded modules, keyed by their absolute paths. */
+var modules = {};
+
+
+/* Add an entry to the `modules` map. */
+function register(path, module) {
+  modules[path] = module;
+}
+
+
+/* Find, load and execute a module. */
+function require(src, dst) {
+  /* Look for not-obviously-a-file import paths in the cache before
+   * attempting to resolve the reference to an absolute path. */
+  if (!/^[\.\/:]/.test(dst) && modules[dst] != null)
+    return modules[dst].exports;
+
+  var path = resolve(src, dst);
+
+  var module = modules[path];
+  if (module != null)
+    return module.exports;
+
+  /* Load the file through our Qt bridge. */
+  var file = __bridge.readScriptFile(path);
+  if (file.error != null)
+    throw new Error('require: ' + file.error + ' (for ' + path + ')');
+
+  return exec(path, file.src);
+}
+
+
+/* Distill a source and a destination component down to an absolute,
+ * cleaned file path. */
+function resolve(src, dst) {
+  if (typeof dst !== 'string' || dst.length === 0)
+    throw new Error('require: invalid path (' + JSON.stringify(dst) + ')');
+
+  /* Special treatment for relative paths from QRC files. This isn't perfect,
+   * but covers all our actual use cases just fine. */
+  if (src.charAt(0) === ':')
+    return ':' + resolve(src.substr(1), dst);
+
+  /* Simply join the two paths. */
+  var i = src.lastIndexOf('/');
+  if (i >= 0)
+    src = src.substr(0, i);
+
+  if (dst.charAt(0) !== '/')
+    dst = src + '/' + dst;
+
+  /* Clean up the resulting path by removing segments that are unnecessary,
+   * or pairs that cancel each other out. */
+  var dirty = dst.split('/');
+  var clean = [];
+
+  for (var i = 0; i < dirty.length; i++) {
+    var s = dirty[i];
+    if (s === '..')
+      clean.pop();
+    else if (s !== '' && s !== '.')
+      clean.push(s);
+  }
+
+  return '/' + clean.join('/');
+}
+
+
+/* Execute a snippet of JavaScript code in a module environment. */
+function exec(path, src) {
+  var module = modules[path] = { exports: {} };
+  var fn;
+
+  /* Compile a function for the module with our custom `eval`. */
+  try {
+    fn = eval('(function(require, module, exports, __dirname, __filename) { ' + src + ' })');
+  } catch (err) {
+    throw new Error('require: syntax error, ' + err.message + ' (in ' + path + ')');
+  }
+
+  var slash = path.lastIndexOf('/');
+  var req = require.bind(null, path);
+  req.register = register;
+
+  fn.call(window, req, module, module.exports,
+          path.substring(0, slash), path.substring(slash + 1));
+
+  return module.exports;
+}
+
+
+/* Load and export the core module. */
+window.koala = require(':/', './lib/koala.js');
+
+
+/* Remove the bridge object to prevent the user from doing weird stuff
+ * by accident (or on purpose), then load and run the main user script. */
+delete window.__bridge;
+
+var main = __bridge.getMainScript();
+exec(main.path, main.src);
+
+
+/* This odd looking function is our custom `eval` wrapper; a neat little
+ * hack which allows us to run a script without giving it the opportunity
+ * to accidentally overwrite any local variables in scope. */
+})(window, document, function () { return eval(arguments[0]); });
+</script>
