@@ -3,7 +3,7 @@ var __bridge = window.__bridge;
 var util = require('./util.js');
 
 
-// QWebFrame JavaScript handles and Frame instances.
+/* QWebFrame JavaScript handles and Frame instances. */
 var handles = [];
 var frames = [];
 
