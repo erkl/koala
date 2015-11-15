@@ -128,7 +128,7 @@ bool Sandbox::javaScriptPrompt(QWebFrame * frame, const QString & message,
 
 bool Sandbox::shouldInterruptJavaScript() {
     /* Interrupting JavaScript execution won't do us any good, because
-     * the main user script is running in the same sandbox. */
+     * the main user script is running in the same environment. */
     return false;
 }
 

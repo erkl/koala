@@ -34,7 +34,7 @@ private:
     QStringList args;
 
     /* Stores whether or not we've seen the main frame's initial navigation
-     * request - to "qrc:/top.html". It is used to block all subsequent
+     * request - to "qrc:/top.html", and is used to block all subsequent
      * navigation requests on the main frame. */
     bool sawFirstNavigation;
 
