@@ -237,6 +237,7 @@ static QNetworkCookie cookieFromVariant(const QVariantMap & raw) {
 
 void Sandbox::onCookiesChanged(QList<QNetworkCookie> cookies) {
     QVariantList list;
+
     foreach (QNetworkCookie cookie, cookies)
         list += cookieToVariant(cookie);
 
@@ -247,9 +248,8 @@ void Sandbox::onCookiesChanged(QList<QNetworkCookie> cookies) {
 void Sandbox::setCookies(const QVariant & raw) {
     QList<QNetworkCookie> cookies;
 
-    foreach (QVariant item, raw.toList()) {
+    foreach (QVariant item, raw.toList())
         cookies += cookieFromVariant(item.toMap());
-    }
 
     CookieJar * jar = (CookieJar *) this->networkAccessManager()->cookieJar();
     jar->setAllCookies(cookies);
