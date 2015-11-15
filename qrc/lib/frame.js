@@ -14,8 +14,8 @@ function Frame(parent, ref) {
   this.children = [];
 
   this.element = ref.frameElement;
-  this.window = ref.window;
-  this.document = ref.document;
+  this.window = null;
+  this.document = null;
 
   this.__intercepts = {};
 
@@ -76,6 +76,16 @@ __bridge.frameSpawned.connect(function (document, handle, parentHandle) {
     frame.children = [];
     frame.window = ref.window;
     frame.document = ref.document;
+
+    /* Make all `console.log` calls from inside this frame available under
+     * a "console" event. */
+    var log_ = ref.window.console.log.bind(ref.window.console);
+
+    ref.window.console.log = function () {
+      var args = Array.prototype.slice.call(arguments);
+      log_.apply(null, args);
+      frame.emit.apply(frame, ['console'].concat(args));
+    }
 
     frame.emit('cleared');
   });
