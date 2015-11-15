@@ -23,7 +23,21 @@
 
 
 int main(int argc, char * argv[]) {
-    QApplication app(argc, argv);
+    /* Prepend "-platform minimal" to the list of arguments. I've given
+     * up on trying to find a way to set this programatically. */
+    int argc_ = argc + 2;
+    char ** argv_ = new char *[argc_];
+
+    argv_[0] = argv[0];
+    argv_[1] = (char *) "-platform";
+    argv_[2] = (char *) "minimal";
+
+    for (int i = 1; i < argc; i++) {
+        argv_[i+2] = argv[i];
+    }
+
+    /* Set up our application. */
+    QApplication app(argc_, argv_);
 
     app.setApplicationName("koala");
     app.setApplicationVersion("0.0.1");
