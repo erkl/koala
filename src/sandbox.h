@@ -30,6 +30,9 @@ private:
     QString mainPath;
     QString mainSource;
 
+    /* Positional arguments. */
+    QStringList args;
+
     /* Stores whether or not we've seen the main frame's initial navigation
      * request - to "qrc:/top.html". It is used to block all subsequent
      * navigation requests on the main frame. */
@@ -45,13 +48,14 @@ public:
           : QWebPage(parent)
           , mainPath(QString())
           , mainSource(QString())
+          , args(QStringList())
           , sawFirstNavigation(false)
           , callbackValue(QVariant()) {
     }
 
     /* Launch the sandbox environment. This effectively means asking the
      * QWebPage to navigate to "qrc:/top.html". */
-    void launch(QString path, QString code);
+    void launch(QString path, QString code, QStringList args);
 
 protected:
     /* Determine whether or not to allow an attempt to navigate
@@ -115,6 +119,9 @@ public slots:
     /* Return an object holding the path and source of the main JavaScript
      * file provided by the user. */
     QVariantMap getMainScript();
+
+    /* Return the list of positional arguments provided to the script. */
+    QVariantList getArgs();
 
     /* Read a UTF-8 encoded script file from disk. */
     QVariantMap readScriptFile(QString path);

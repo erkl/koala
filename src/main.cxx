@@ -55,16 +55,17 @@ int main(int argc, char * argv[]) {
     parser.addOption(certificatesOption);
 
     parser.addPositionalArgument("script", "The .js-file to be executed.");
+    parser.addPositionalArgument("[args..]", "Optional command-line arguments for the script.");
     parser.process(app);
 
     QStringList args = parser.positionalArguments();
-    if (args.size() != 1) {
+    if (args.size() < 1) {
         parser.showHelp(-1);
         return -1;
     }
 
     /* Read the main script file. */
-    QFileInfo info(args.at(0));
+    QFileInfo info(args.takeFirst());
     QString path = info.absoluteFilePath();
 
     QByteArray buf;
@@ -109,7 +110,7 @@ int main(int argc, char * argv[]) {
     }
 
     /* Finally, launch the sandbox environment. */
-    sandbox->launch(path, QString::fromUtf8(buf));
+    sandbox->launch(path, QString::fromUtf8(buf), args);
 
     return app.exec();
 }

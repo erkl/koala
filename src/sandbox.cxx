@@ -22,10 +22,11 @@
 #include "./util.h"
 
 
-void Sandbox::launch(QString path, QString src) {
+void Sandbox::launch(QString path, QString src, QStringList args) {
     /* Save main script details. */
     this->mainPath = path;
     this->mainSource = src;
+    this->args = args;
 
     /* This setting is what allows the user script to tinker with the contents
      * of any iframe it creates, regardless of the domain. It's essentially the
@@ -136,6 +137,16 @@ QVariantMap Sandbox::getMainScript() {
     QVariantMap out;
     out["path"] = this->mainPath;
     out["src"] = this->mainSource;
+    return out;
+}
+
+
+QVariantList Sandbox::getArgs() {
+    QVariantList out;
+
+    foreach (QString arg, this->args)
+        out += QVariant(arg);
+
     return out;
 }
 

@@ -9,6 +9,10 @@ var util = require('./util.js');
 var koala = new util.Emitter();
 
 
+/* Expose any extra command-line arguments. */
+koala.args = __bridge.getArgs();
+
+
 /* Create a new frame and navigate to the specified URL. */
 koala.open = function (url, options) {
   var frame = Frame.create();
