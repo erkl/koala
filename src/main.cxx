@@ -15,6 +15,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QFileInfo>
+#include <QNetworkProxy>
 
 #include "./sandbox.h"
 #include "./stdio.h"
@@ -29,10 +30,13 @@ int main(int argc, char * argv[]) {
 
     /* Parse command-line options. */
     QCommandLineParser parser;
+    QCommandLineOption proxyOption(QStringList() << "p" << "proxy", "Optional HTTP/HTTPS proxy.", "address");
 
     parser.addHelpOption();
     parser.addVersionOption();
-    parser.addPositionalArgument("script", "The .js-file to be executed");
+    parser.addOption(proxyOption);
+
+    parser.addPositionalArgument("script", "The .js-file to be executed.");
     parser.process(app);
 
     QStringList args = parser.positionalArguments();
@@ -60,6 +64,13 @@ int main(int argc, char * argv[]) {
                      sandbox, SIGNAL(messageReceived(QString)));
     QObject::connect(sandbox, SIGNAL(messageSent(QString)),
                      stdio, SLOT(send(QString)));
+
+    /* Did the user request we use a network proxy? */
+    if (parser.isSet(proxyOption)) {
+        QUrl url = QUrl::fromUserInput(parser.value(proxyOption));
+        QNetworkProxy proxy(QNetworkProxy::HttpProxy, url.host(), url.port(8080));
+        QNetworkProxy::setApplicationProxy(proxy);
+    }
 
     /* Finally, launch the sandbox environment. */
     sandbox->launch(path, QString::fromUtf8(buf));
