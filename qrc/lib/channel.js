@@ -27,10 +27,8 @@ Channel.open = function (name) {
 
 /* Send a message over the channel. */
 Channel.prototype.send = function (message) {
-  var envelope = {
-    channel: this.name,
-    value: message == null ? null : message
-  };
+  var envelope = {};
+  envelope[this.name] = message != null ? message : null;
 
   __bridge.messageSent(JSON.stringify(envelope));
 };
@@ -38,19 +36,19 @@ Channel.prototype.send = function (message) {
 
 /* Route incoming messages to their respective channels. */
 __bridge.messageReceived.connect(function (raw) {
-  var name, value;
+  var envelope;
 
   try {
-    var envelope = JSON.parse(raw);
-    name = envelope.channel;
-    value = envelope.value;
+    envelope = JSON.parse(raw);
   } catch (err) {
     return;
   }
 
-  var chan = channels[name];
-  if (chan != null)
-    chan.emit('message', value);
+  for (var key in envelope) {
+    var chan = channels[key];
+    if (chan != null)
+      chan.emit('message', envelope[key]);
+  }
 });
 
 
