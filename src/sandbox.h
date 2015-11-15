@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <QNetworkCookie>
 #include <QNetworkAccessManager>
 #include <QVariant>
 #include <QWebElement>
@@ -106,6 +107,10 @@ signals:
     void messageReceived(QString message);
     void messageSent(QString message);
 
+    /* Signal that the contents of the cookie jar has changed to the provided
+     * list. This signal is used by the JavaScript runtime. */
+    void cookiesChanged(QVariantList cookies);
+
 public slots:
     /* Return an object holding the path and source of the main JavaScript
      * file provided by the user. */
@@ -118,6 +123,13 @@ public slots:
      * JavaScript runtime. See the documentation for `callbackRequested`. */
     void setCallbackValue(const QVariant & value);
 
+    /* By connecting our `CookieJar` instance's `updated` signal to this slot,
+     * the sandbox is notified when the jar's contents have changed. */
+    void onCookiesChanged(const QList<QNetworkCookie> cookies);
+
+    /* Overwrite the cookie jar with a new set of cookies. */
+    void setCookies(const QVariant & cookies);
+
     /* Halt execution immediately and exit the process. */
     void exit(int code);
 
@@ -126,6 +138,6 @@ private slots:
     void onFrameCreated(QWebFrame * frame);
 
 private:
-    /* Request a callback and grab the return value in on fell swoop. */
+    /* Request a callback and grab the return value in one fell swoop. */
     QVariant requestCallback(QString name, const QWebFrame * frame, const QVariantList & args);
 };

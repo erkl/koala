@@ -17,6 +17,7 @@
 #include <QFileInfo>
 #include <QNetworkProxy>
 
+#include "./cookies.h"
 #include "./network.h"
 #include "./sandbox.h"
 #include "./stdio.h"
@@ -75,13 +76,17 @@ int main(int argc, char * argv[]) {
     Sandbox * sandbox = new Sandbox(&app);
     StdioHelper * stdio = new StdioHelper(&app);
     NetworkManager * network = new NetworkManager(&app);
+    CookieJar * jar = new CookieJar(network);
 
+    network->setCookieJar(jar);
     sandbox->setNetworkAccessManager(network);
 
     QObject::connect(stdio, SIGNAL(received(QString)),
                      sandbox, SIGNAL(messageReceived(QString)));
     QObject::connect(sandbox, SIGNAL(messageSent(QString)),
                      stdio, SLOT(send(QString)));
+    QObject::connect(jar, SIGNAL(updated(QList<QNetworkCookie>)),
+                     sandbox, SLOT(onCookiesChanged(QList<QNetworkCookie>)));
 
     /* Did the user request we use a network proxy? */
     if (parser.isSet(proxyOption)) {

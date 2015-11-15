@@ -17,6 +17,7 @@
 #include <QWebFrame>
 #include <QWebPage>
 
+#include "./cookies.h"
 #include "./sandbox.h"
 #include "./util.h"
 
@@ -157,6 +158,90 @@ QVariantMap Sandbox::readScriptFile(QString path) {
 
 void Sandbox::setCallbackValue(const QVariant & value) {
     this->callbackValue = value;
+}
+
+
+static QVariantMap cookieToVariant(const QNetworkCookie & cookie) {
+    QVariantMap raw;
+
+    /* Encode basic properties. */
+    raw["name"] = QString(cookie.name());
+    raw["value"] = QString(cookie.value());
+    raw["domain"] = cookie.domain();
+    raw["path"] = cookie.path();
+
+    /* Encode the expiration date. */
+    if (cookie.expirationDate().isValid())
+        raw["expires"] = cookie.expirationDate().toUTC().toString("yyyy-MM-dd hh:mm:ss.zzz UTC");
+    else
+        raw["expires"] = QVariant();
+
+    /* Encode security flags. */
+    raw["isHttpOnly"] = cookie.isHttpOnly();
+    raw["isSecure"] = cookie.isSecure();
+
+    return raw;
+}
+
+
+static QNetworkCookie cookieFromVariant(const QVariantMap & raw) {
+    QNetworkCookie cookie;
+
+    /* Parse core properties. */
+    QVariant name = raw["name"];
+    QVariant value = raw["value"];
+    QVariant domain = raw["domain"];
+    QVariant path = raw["path"];
+
+    if (!name.isNull() && name.canConvert<QByteArray>())
+        cookie.setName(name.toByteArray());
+    if (!value.isNull() && value.canConvert<QByteArray>())
+        cookie.setValue(value.toByteArray());
+    if (!domain.isNull() && domain.canConvert<QString>())
+        cookie.setDomain(domain.toString());
+    if (!path.isNull() && path.canConvert<QString>())
+        cookie.setPath(path.toString());
+
+    /* Parse the expiration date. */
+    QVariant expires = raw["expires"];
+
+    if (!expires.isNull() && expires.canConvert<QString>()) {
+        QDateTime time = QDateTime::fromString(expires.toString(), "yyyy-MM-dd hh:mm:ss.zzz UTC");
+        if (time.isValid())
+            cookie.setExpirationDate(time);
+    }
+
+    /* Parse security flags. */
+    QVariant isHttpOnly = raw["isHttpOnly"];
+    QVariant isSecure = raw["isSecure"];
+
+    if (!isHttpOnly.isNull() && isHttpOnly.canConvert<bool>())
+        cookie.setHttpOnly(isHttpOnly.toBool());
+    if (!isSecure.isNull() && isSecure.canConvert<bool>())
+        cookie.setSecure(isSecure.toBool());
+
+    return cookie;
+}
+
+
+void Sandbox::onCookiesChanged(QList<QNetworkCookie> cookies) {
+    QVariantList list;
+    foreach (QNetworkCookie cookie, cookies)
+        list += cookieToVariant(cookie);
+
+    emit this->cookiesChanged(list);
+}
+
+
+void Sandbox::setCookies(const QVariant & raw) {
+    QList<QNetworkCookie> cookies;
+
+    foreach (QVariant item, raw.toList()) {
+        cookies += cookieFromVariant(item.toMap());
+    }
+
+    CookieJar * jar = (CookieJar *) this->networkAccessManager()->cookieJar();
+    jar->setAllCookies(cookies);
 }
 
 
