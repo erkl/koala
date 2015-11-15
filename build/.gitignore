@@ -1,0 +1,5 @@
+koala
+Makefile
+.qmake.stash
+*.cpp
+*.o
