@@ -17,6 +17,7 @@
 #include <QFileInfo>
 #include <QNetworkProxy>
 
+#include "./network.h"
 #include "./sandbox.h"
 #include "./stdio.h"
 #include "./util.h"
@@ -73,6 +74,9 @@ int main(int argc, char * argv[]) {
     /* Initialize our singletons, and hook their signals up. */
     Sandbox * sandbox = new Sandbox(&app);
     StdioHelper * stdio = new StdioHelper(&app);
+    NetworkManager * network = new NetworkManager(&app);
+
+    sandbox->setNetworkAccessManager(network);
 
     QObject::connect(stdio, SIGNAL(received(QString)),
                      sandbox, SIGNAL(messageReceived(QString)));
