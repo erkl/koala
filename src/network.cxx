@@ -18,9 +18,16 @@
 #include "./network.h"
 
 
+void NetworkManager::setSslConfig(QSslConfiguration config) {
+    this->sslConfig = config;
+}
+
+
 QNetworkReply * NetworkManager::createRequest(QNetworkAccessManager::Operation op,
-                                              const QNetworkRequest & req,
+                                              const QNetworkRequest & request,
                                               QIODevice * data) {
+    QNetworkRequest req(request);
+
     /* Prevent requests with the "qrc" and "file" schemes (except the very
      * first request, which is necessary for loading "qrc://top.html"). */
     QString scheme = req.url().scheme().toLower();
@@ -33,7 +40,9 @@ QNetworkReply * NetworkManager::createRequest(QNetworkAccessManager::Operation o
         return new BlockedReply(op, req);
     }
 
-    /* Fall back to the default implementation. */
+    /* Attach our SSL configuration to the request. */
+    req.setSslConfiguration(this->sslConfig);
+
     return QNetworkAccessManager::createRequest(op, req, data);
 }
 

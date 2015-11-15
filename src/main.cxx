@@ -46,11 +46,13 @@ int main(int argc, char * argv[]) {
 
     /* Parse command-line options. */
     QCommandLineParser parser;
-    QCommandLineOption proxyOption(QStringList() << "p" << "proxy", "Optional HTTP/HTTPS proxy.", "address");
+    QCommandLineOption proxyOption(QStringList() << "p" << "proxy", "Optional HTTP/HTTPS proxy.", "host:port");
+    QCommandLineOption certificatesOption(QStringList() << "c" << "certificates", "Custom set of CA certificates.", "glob");
 
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOption(proxyOption);
+    parser.addOption(certificatesOption);
 
     parser.addPositionalArgument("script", "The .js-file to be executed.");
     parser.process(app);
@@ -93,6 +95,17 @@ int main(int argc, char * argv[]) {
         QUrl url = QUrl::fromUserInput(parser.value(proxyOption));
         QNetworkProxy proxy(QNetworkProxy::HttpProxy, url.host(), url.port(8080));
         QNetworkProxy::setApplicationProxy(proxy);
+    }
+
+    /* Did the user specify a custom set of certificate authorities? */
+    if (parser.isSet(certificatesOption)) {
+        QString path = parser.value(certificatesOption);
+        QList<QSslCertificate> certs = QSslCertificate::fromPath(path, QSsl::Pem, QRegExp::Wildcard);
+
+        QSslConfiguration config = QSslConfiguration::defaultConfiguration();
+        config.setCaCertificates(certs);
+
+        network->setSslConfig(config);
     }
 
     /* Finally, launch the sandbox environment. */

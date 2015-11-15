@@ -30,12 +30,19 @@ private:
      * specifically "qrc://top.html". */
     bool sawFirstQRCRequest;
 
+    /* SSL configuration. */
+    QSslConfiguration sslConfig;
+
 public:
     /* Constructs a new NetworkManager instance. */
     NetworkManager(QObject * parent = NULL)
                  : QNetworkAccessManager(parent)
-                 , sawFirstQRCRequest(false) {
+                 , sawFirstQRCRequest(false)
+                 , sslConfig(QSslConfiguration::defaultConfiguration()) {
     }
+
+    /* Overwrite the network manager's SSL settings. */
+    void setSslConfig(QSslConfiguration config);
 
 protected:
     /* Creates a QNetworkReply in response to the request. */
